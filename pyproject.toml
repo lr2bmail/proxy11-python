@@ -25,7 +25,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://proxy11.com"
 Documentation = "https://proxy11.com/apidoc"
-Repository = "https://github.com/proxy11/python-client"
+Repository = "https://github.com/lr2bmail/proxy11-python"
 
 [tool.setuptools.packages.find]
 include = ["proxy11*"]
