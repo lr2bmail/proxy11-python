@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proxy11"
+version = "1.0.0"
+description = "Lightweight Python client for the Proxy11 free proxy API"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.6"
+authors = [
+    {name = "Proxy11", email = "info@proxy11.com"},
+]
+keywords = ["proxy", "free-proxy", "proxy-list", "web-scraping", "proxy-api"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: Proxy Servers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "requests>=2.20",
+]
+
+[project.urls]
+Homepage = "https://proxy11.com"
+Documentation = "https://proxy11.com/apidoc"
+Repository = "https://github.com/proxy11/python-client"
+
+[tool.setuptools.packages.find]
+include = ["proxy11*"]
