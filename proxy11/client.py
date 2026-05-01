@@ -152,6 +152,8 @@ class ProxyRotator:
         # refresh after N rotations to keep pool fresh
         if self.refresh_after and self._count >= self.refresh_after:
             self._refresh()
+            if not self._pool:
+                raise NoProxiesError("No proxies available")
 
         proxy = self._pool[self._index % len(self._pool)]
         self._index += 1

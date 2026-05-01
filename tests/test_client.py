@@ -45,6 +45,21 @@ def test_rotator_raises_when_no_proxies():
         EmptyClient().rotator(limit=10).next()
 
 
+def test_rotator_raises_when_refresh_returns_no_proxies():
+    class RefreshEmptyClient(FakeClient):
+        def as_list(self, **kwargs):
+            self.calls.append(kwargs)
+            if len(self.calls) == 1:
+                return ["1.1.1.1:80"]
+            return []
+
+    rotator = RefreshEmptyClient().rotator(limit=10, refresh_after=1)
+
+    assert rotator.next() == "1.1.1.1:80"
+    with pytest.raises(NoProxiesError, match="No proxies available"):
+        rotator.next()
+
+
 def test_get_raises_api_error_for_error_payload():
     class Response:
         status_code = 200
