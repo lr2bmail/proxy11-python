@@ -1,8 +1,11 @@
 import random
+from urllib.parse import urlsplit
+
 import requests
 
 
 BASE_URL = "https://proxy11.com/api/proxy.json"
+ROTATE_PATH = "/api/rotate"
 
 
 class Proxy11Error(ValueError):
@@ -85,6 +88,63 @@ class ProxyClient:
         if not proxies:
             raise NoProxiesError("No proxies available")
         return random.choice(proxies)
+
+    def rotate(self, strategy="random", session=None, sticky_seconds=None,
+               country=None, proxy_type=None, speed=None, port=None, fmt="json"):
+        """Fetch one proxy from the server-side rotation endpoint.
+
+        Args:
+            strategy: "random" (fresh proxy each call) or "sticky" (same proxy
+                per session for sticky_seconds).
+            session: label that pins sticky rotation. Defaults to a per-key
+                value on the server.
+            sticky_seconds: sticky window, clamped to 60-3600 (default 600).
+            country, proxy_type, speed, port: same filters as get().
+            fmt: "json" (default, returns dict) or "txt" (returns "ip:port").
+
+        Returns:
+            dict (fmt="json") or str (fmt="txt").
+        """
+        params = {"key": self.api_key, "strategy": strategy}
+        if session is not None:
+            params["session"] = session
+        if sticky_seconds is not None:
+            params["sticky_seconds"] = int(sticky_seconds)
+        if country is not None:
+            params["country"] = country
+        if proxy_type is not None:
+            params["type"] = proxy_type
+        if speed is not None:
+            params["speed"] = float(speed)
+        if port is not None:
+            params["port"] = int(port)
+
+        resp = self._session.get(self._rotate_url(fmt), params=params, timeout=self.timeout)
+
+        if resp.status_code == 404:
+            raise NoProxiesError("No proxies available for the requested filters")
+        if resp.status_code >= 400:
+            try:
+                msg = resp.json().get("msg", resp.reason)
+            except Exception:
+                msg = resp.reason
+            raise APIError("API error {0}: {1}".format(resp.status_code, msg))
+
+        if fmt == "txt":
+            return resp.text.strip()
+
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            raise APIError("API returned invalid JSON") from exc
+        if isinstance(data, dict) and data.get("error"):
+            raise APIError(data.get("msg", "API error"))
+        return data
+
+    def _rotate_url(self, fmt):
+        parts = urlsplit(self.base_url)
+        origin = "{0}://{1}".format(parts.scheme, parts.netloc)
+        return origin + ROTATE_PATH + (".txt" if fmt == "txt" else "")
 
     def save(self, path, **kwargs):
         """Save proxies to a text file, one ip:port per line."""
